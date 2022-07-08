@@ -1,0 +1,11 @@
+[package]
+name = "iot-simulator-generator-sma"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iot-simulator-api = { path = "../iot-simulator-api", version = "*" }
+rand = "0.8"
+
+[lib]
+crate-type = ["dylib"]

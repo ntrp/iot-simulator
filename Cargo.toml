@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+  "iot-simulator-api",
+  "iot-simulator-core",
+  "iot-simulator-generator-faker",
+  "iot-simulator-generator-sma",
+  "iot-simulator",
+]
