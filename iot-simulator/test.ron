@@ -1,0 +1,9 @@
+Simulation(
+    name: "test",
+    description: "test",
+    devices: [
+        Device(
+            name: "name",
+        )
+    ]
+)

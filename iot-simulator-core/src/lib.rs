@@ -1,3 +1,5 @@
+extern crate core;
+
 #[cfg(test)]
 mod tests {
     use iot_simulator_api::generator::GeneratorPlugin;
@@ -20,3 +22,5 @@ mod tests {
         assert_eq!(result, 4);
     }
 }
+
+pub mod parser;

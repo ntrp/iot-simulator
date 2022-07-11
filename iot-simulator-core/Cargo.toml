@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 iot-simulator-api = { path = "../iot-simulator-api", version = "*" }
 libloading = "0.7.3"
+ron = "0.7"
