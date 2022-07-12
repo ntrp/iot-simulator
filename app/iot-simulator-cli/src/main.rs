@@ -1,3 +1,4 @@
+use std::error::Error;
 use chrono::Utc;
 use clap::Parser;
 
@@ -15,7 +16,8 @@ struct Args {
     simulation_file: String,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
     let settings = load_settings(args.config_file);
     let mut plugin = load_generator_plugin(&settings.generator_plugins[0]);
@@ -23,4 +25,5 @@ fn main() {
     for _ in 1..15 {
         println!("{}", plugin.generate(Utc::now()));
     }
+    Ok(())
 }

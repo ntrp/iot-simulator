@@ -4,15 +4,15 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Sensor {
     #[serde(default = "Uuid::new_v4")]
-    id: Uuid,
-    name: String,
+    pub id: Uuid,
+    pub name: String,
     #[serde(default = "HashMap::new")]
-    metadata: HashMap<String, String>,
-    sampling_rate: i32,
-    value_generator: String,
+    pub metadata: HashMap<String, String>,
+    pub sampling_rate: i64,
+    pub value_generator: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
