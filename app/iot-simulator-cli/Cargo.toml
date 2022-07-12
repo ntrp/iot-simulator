@@ -1,0 +1,10 @@
+[package]
+name = "iot-simulator-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iot-simulator-api = { path = "../../lib/iot-simulator-api", version = "*" }
+iot-simulator-core = { path = "../../lib/iot-simulator-core", version = "*" }
+clap = { version = "3.2.8", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }

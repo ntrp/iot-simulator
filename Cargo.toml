@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "iot-simulator-api",
-    "iot-simulator-core",
-    "iot-simulator-generator-sma",
-    "iot-simulator",
+    "lib/iot-simulator-api",
+    "lib/iot-simulator-core",
+    "plugin/iot-simulator-generator-sma",
+    "app/iot-simulator-cli",
 ]
