@@ -1,0 +1,4 @@
+[[generator_plugins]]
+id = "sma"
+generator_type = "Stateful"
+path = "./target/debug/libiot_simulator_generator_sma.so"

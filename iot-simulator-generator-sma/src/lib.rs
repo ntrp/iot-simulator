@@ -1,16 +1,13 @@
+use std::collections::vec_deque::*;
+
+use chrono::{DateTime, Utc};
 use rand::prelude::ThreadRng;
 use rand::Rng;
-use std::collections::vec_deque::*;
 
 use iot_simulator_api::generator::*;
 
 #[no_mangle]
-pub fn new_instance(
-    min: f32,
-    max: f32,
-    precision: u32,
-    buffer_size: usize,
-) -> Box<dyn StatefulGeneratorPlugin<(), f32>> {
+pub fn new_instance(min: f32, max: f32, precision: u32, buffer_size: usize) -> Box<dyn GeneratorPlugin> {
     SMAGenerator::new(min, max, precision, buffer_size)
 }
 
@@ -36,8 +33,8 @@ impl SMAGenerator {
     }
 }
 
-impl GeneratorPlugin<(), f32> for SMAGenerator {
-    fn generate(&mut self, _: ()) -> f32 {
+impl GeneratorPlugin for SMAGenerator {
+    fn generate(&mut self, _: DateTime<Utc>) -> GenerationResult {
         let val: f32 = self.rng.gen_range(self.min..self.max);
         if self.buffer.is_empty() {
             for _ in 1..=self.buffer_size {
@@ -46,7 +43,7 @@ impl GeneratorPlugin<(), f32> for SMAGenerator {
         }
         self.buffer.pop_back();
         self.buffer.push_front(val);
-        round(avg(&mut self.buffer), self.precision)
+        GenerationResult::ResultF32(round(avg(&mut self.buffer), self.precision))
     }
 }
 
@@ -58,8 +55,6 @@ fn round(n: f32, precision: u32) -> f32 {
     let p = 10i32.pow(precision) as f32;
     (n * p).round() / p
 }
-
-impl StatefulGeneratorPlugin<(), f32> for SMAGenerator {}
 
 #[cfg(test)]
 #[path = "lib_tests.rs"]

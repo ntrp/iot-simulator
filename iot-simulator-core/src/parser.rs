@@ -1,5 +1,6 @@
-use iot_simulator_api::descriptor::*;
 use std::fs;
+
+use iot_simulator_api::simulation::*;
 
 pub fn parse_simulation(file_path: String) -> Simulation {
     let config = fs::read_to_string(&file_path)

@@ -1,3 +1,1 @@
-pub trait OutputPlugin {
-    
-}
+pub trait OutputPlugin {}

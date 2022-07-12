@@ -1,17 +1,19 @@
-use crate::avg;
 use std::collections::VecDeque;
+
+use crate::avg;
 
 #[cfg(test)]
 mod lib_tests {
-    use super::super::*;
     use crate::lib_tests::std_deviation;
+
+    use super::super::*;
 
     #[test]
     fn it_should_generate_in_the_range() {
         let mut plugin = new_instance(10.0, 20.0, 2, 20);
 
         for _ in 1..150 {
-            let val = plugin.generate(());
+            let val = plugin.generate();
             assert!(val > 10.0 && val < 20.0);
         }
     }
@@ -21,8 +23,8 @@ mod lib_tests {
         let mut plugin_small = new_instance(10.0, 20.0, 2, 5);
         let mut plugin_large = new_instance(10.0, 20.0, 2, 20);
 
-        let mut small_vals: VecDeque<f32> = (1..150).map(|_| plugin_small.generate(())).collect();
-        let mut large_vals: VecDeque<f32> = (1..150).map(|_| plugin_large.generate(())).collect();
+        let mut small_vals: VecDeque<f32> = (1..150).map(|_| plugin_small.generate()).collect();
+        let mut large_vals: VecDeque<f32> = (1..150).map(|_| plugin_large.generate()).collect();
 
         assert!(std_deviation(&mut small_vals) > std_deviation(&mut large_vals));
     }
