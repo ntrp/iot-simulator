@@ -1,13 +1,42 @@
+use std::collections::HashMap;
+
 use libloading::*;
+use once_cell::sync::OnceCell;
 
 use iot_simulator_api::generator::GeneratorPlugin;
 use iot_simulator_api::output::OutputPlugin;
 
 use crate::config::{GeneratorPluginConf, OutputPluginConf};
 
-pub struct PluginFactory {}
+type GeneratorPluginFactoryFn = fn() -> Box<dyn GeneratorPlugin>;
 
-pub struct PluginRegistry {}
+#[derive(Debug)]
+pub struct GeneratorPluginFactoryRegistry {
+    registry: HashMap<String, GeneratorPluginFactoryFn>,
+}
+
+pub static GENERATOR_FACTORY_REGISTRY: OnceCell<GeneratorPluginFactoryRegistry> = OnceCell::new();
+
+impl GeneratorPluginFactoryRegistry {
+    pub fn instance() -> &'static GeneratorPluginFactoryRegistry {
+        GENERATOR_FACTORY_REGISTRY
+            .get()
+            .expect("Registry not initialized")
+    }
+    pub fn get(generator_id: &String) -> Option<&'static GeneratorPluginFactoryFn> {
+        GeneratorPluginFactoryRegistry::instance().registry.get(generator_id)
+    }
+    pub fn init(plugins: Vec<GeneratorPluginConf>) {
+        let mut registry: HashMap<String, GeneratorPluginFactoryFn> = HashMap::new();
+        for plugin in plugins {
+            let factory: Box<dyn GeneratorPlugin> = load_generator_plugin(&plugin);
+            registry.insert(plugin.id, Default::default);
+        }
+        GENERATOR_FACTORY_REGISTRY
+            .set(GeneratorPluginFactoryRegistry { registry })
+            .unwrap()
+    }
+}
 
 pub fn load_generator_plugin(plugin: &GeneratorPluginConf) -> Box<dyn GeneratorPlugin> {
     unsafe {

@@ -1,7 +1,9 @@
-use std::fmt;
-use std::fmt::Formatter;
+use std::collections::HashMap;
+use std::fmt::{Display, Error, Formatter};
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub enum GenerationResult {
@@ -10,8 +12,31 @@ pub enum GenerationResult {
     ResultString(String),
 }
 
-impl fmt::Display for GenerationResult {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+#[derive(Debug, Deserialize)]
+pub enum GeneratorType {
+    Stateless,
+    Stateful,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeneratorConfig {
+    pub generator_id: String,
+    #[serde(default = "default_instance_id")]
+    pub instance_id: String,
+    #[serde(default = "HashMap::new")]
+    pub params: HashMap<String, String>,
+}
+
+fn default_instance_id() -> String {
+    Uuid::new_v4().to_string()
+}
+
+pub trait GeneratorPlugin {
+    fn generate(&mut self, time: DateTime<Utc>) -> GenerationResult;
+}
+
+impl Display for GenerationResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             GenerationResult::ResultI32(x) => write!(f, "{}", x),
             GenerationResult::ResultF32(x) => write!(f, "{}", x),
@@ -20,15 +45,18 @@ impl fmt::Display for GenerationResult {
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub enum GeneratorType {
-    Stateless,
-    Stateful,
+impl Default for Box<dyn GeneratorPlugin> {
+    fn default() -> Self {
+        struct Anon();
+        impl GeneratorPlugin for Anon {
+            fn generate(&mut self, _: DateTime<Utc>) -> GenerationResult {
+                GenerationResult::ResultI32(1)
+            }
+        }
+        Box::new(Anon())
+    }
 }
 
-pub trait GeneratorPlugin {
-    fn generate(&mut self, time: DateTime<Utc>) -> GenerationResult;
-}
 
 // FIXME: rework plugin loading system
 // https://adventures.michaelfbryan.com/posts/plugins-in-rust/

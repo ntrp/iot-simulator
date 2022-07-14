@@ -4,6 +4,15 @@ Simulation(
     devices: [
         Device(
             name: "name",
+            sensors: [
+                Sensor(
+                    name: "Temp",
+                    sampling_rate: 1000,
+                    value_generator: GeneratorConfig(
+                        generator_id: "sma"
+                    ),
+                )
+            ]
         )
     ]
 )
