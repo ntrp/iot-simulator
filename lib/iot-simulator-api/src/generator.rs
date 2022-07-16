@@ -1,15 +1,31 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
+use std::str::FromStr;
+use std::sync::{Arc, RwLock};
 
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd)]
 pub enum GenerationResult {
-    ResultI32(i32),
-    ResultF32(f32),
-    ResultString(String),
+    Int(i32),
+    Float(f32),
+    Str(String),
+}
+
+impl Default for GenerationResult {
+    fn default() -> Self {
+        GenerationResult::Str("MOCK".to_string())
+    }
+}
+
+impl FromStr for GenerationResult {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(GenerationResult::Str(s.to_string()))
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -38,9 +54,9 @@ pub trait GeneratorPlugin {
 impl Display for GenerationResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
-            GenerationResult::ResultI32(x) => write!(f, "{}", x),
-            GenerationResult::ResultF32(x) => write!(f, "{}", x),
-            GenerationResult::ResultString(x) => write!(f, "{}", x)
+            GenerationResult::Int(x) => write!(f, "{}", x),
+            GenerationResult::Float(x) => write!(f, "{}", x),
+            GenerationResult::Str(x) => write!(f, "{}", x),
         }
     }
 }
@@ -50,37 +66,45 @@ impl Default for Box<dyn GeneratorPlugin> {
         struct Anon();
         impl GeneratorPlugin for Anon {
             fn generate(&mut self, _: DateTime<Utc>) -> GenerationResult {
-                GenerationResult::ResultI32(1)
+                GenerationResult::Int(1)
             }
         }
         Box::new(Anon())
     }
 }
 
+pub type GeneratorPointer = Arc<RwLock<dyn GeneratorPlugin + Send + Sync>>;
 
-// FIXME: rework plugin loading system
-// https://adventures.michaelfbryan.com/posts/plugins-in-rust/
-//#[derive(Copy, Clone)]
-//pub struct GeneratorPluginDeclaration {
-//    pub rustc_version: &'static str,
-//    pub core_version: &'static str,
-//    pub register: unsafe extern "C" fn(&mut dyn GeneratorPluginRegistry),
-//}
-//
-//pub trait GeneratorPluginRegistry {
-//    fn register_function(&mut self, name: &str, plugin: Box<dyn GeneratorPlugin<_, O>>);
-//}
-//
-//#[macro_export]
-//macro_rules! export_plugin {
-//    ($register:expr) => {
-//        #[doc(hidden)]
-//        #[no_mangle]
-//        pub static plugin_declaration: $crate::PluginDeclaration =
-//            $crate::PluginDeclaration {
-//                rustc_version: $crate::RUSTC_VERSION,
-//                core_version: $crate::CORE_VERSION,
-//                register: $register,
-//            };
-//    };
-//}
+#[derive(Copy, Clone)]
+pub struct GeneratorPluginDeclaration {
+    pub rustc_version: &'static str,
+    pub core_version: &'static str,
+    pub generator_id: &'static str,
+    pub instance_fn: unsafe fn(args: HashMap<String, String>) -> GeneratorPointer,
+}
+
+pub fn unwrap_arg<T: FromStr>(arg: &str, args: &HashMap<String, String>) -> T {
+    match args
+        .get(arg)
+        .unwrap_or_else(|| panic!("No argument named {} available in the args map", arg))
+        .parse::<T>()
+    {
+        Ok(val) => val,
+        Err(_) => panic!("Failed to parse param '{}'", arg),
+    }
+}
+
+#[macro_export]
+macro_rules! export_plugin {
+    ($generator_id:expr,$instance_fn:expr) => {
+        #[doc(hidden)]
+        #[no_mangle]
+        pub static plugin_declaration: $crate::generator::GeneratorPluginDeclaration =
+            $crate::generator::GeneratorPluginDeclaration {
+                rustc_version: $crate::RUSTC_VERSION,
+                core_version: $crate::CORE_VERSION,
+                generator_id: $generator_id,
+                instance_fn: $instance_fn,
+            };
+    };
+}

@@ -1,67 +1,64 @@
-use std::collections::HashMap;
+use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
-use derivative::Derivative;
-use serde::{Deserialize, Deserializer};
-use uuid::Uuid;
+use chrono::Utc;
+use futures_util::future::join_all;
+use futures_util::pin_mut;
+use tokio_stream::StreamExt;
 
-use iot_simulator_api::generator::{GeneratorConfig, GeneratorPlugin};
+use crate::emitter::sensor_emitter;
+use crate::parser::{Device, Sensor, Simulation};
 
-use crate::plugin::GeneratorPluginFactoryRegistry;
-
-#[derive(Derivative, Deserialize)]
-#[derivative(Debug)]
-pub struct Sensor {
-    #[serde(default = "Uuid::new_v4")]
-    pub id: Uuid,
-    pub name: String,
-    #[serde(default = "HashMap::new")]
-    pub metadata: HashMap<String, String>,
-    pub sampling_rate: i64,
-    #[serde(deserialize_with = "to_generator")]
-    #[derivative(Debug = "ignore")]
-    pub value_generator: Box<dyn GeneratorPlugin>,
-}
-
-pub fn to_generator<'de, D>(deserializer: D) -> Result<Box<dyn GeneratorPlugin>, D::Error>
-    where
-        D: Deserializer<'de>,
-{
-    let config = GeneratorConfig::deserialize(deserializer)?;
-    match GeneratorPluginFactoryRegistry::get(&config.generator_id) {
-        Some(factory) => Ok(factory()),
-        None => panic!(
-            "Cannot find factory for generator id {}",
-            config.generator_id
-        ),
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub struct Device {
-    #[serde(default = "Uuid::new_v4")]
-    id: Uuid,
-    name: String,
-    #[serde(default = "HashMap::new")]
-    metadata: HashMap<String, String>,
-    #[serde(default = "Vec::new")]
-    pub sensors: Vec<Sensor>,
-    #[serde(default = "Vec::new")]
+struct SensorIter {
+    stack: Vec<Arc<Sensor>>,
     devices: Vec<Device>,
 }
 
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub struct Simulation {
-    name: String,
-    #[serde(default = "String::new")]
-    description: String,
-    #[serde(default = "Utc::now")]
-    start_at: DateTime<Utc>,
-    end_at: Option<DateTime<Utc>>,
-    #[serde(default = "Vec::new")]
-    pub devices: Vec<Device>,
-    #[serde(default = "Vec::new")]
-    output_plugins: Vec<String>,
+impl SensorIter {
+    fn new(simulation: Simulation) -> Self {
+        SensorIter {
+            stack: vec![],
+            devices: simulation.devices,
+        }
+    }
+}
+
+impl Iterator for SensorIter {
+    type Item = Arc<Sensor>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(device) = self.devices.pop() {
+            for device in device.devices {
+                self.devices.push(device);
+            }
+            for sensor in device.sensors {
+                self.stack.push(Arc::from(sensor));
+            }
+        }
+        if let Some(sensor) = self.stack.pop() {
+            return Some(sensor);
+        }
+        None
+    }
+}
+
+pub async fn run(simulation: Simulation) {
+    let start_at = simulation.start_at;
+    let end_at = simulation.end_at;
+
+    let iter = SensorIter::new(simulation);
+
+    let emitters = iter.map(|sensor| sensor_emitter("".to_string(), sensor, start_at, end_at));
+
+    let mut handles = Vec::new();
+    for emitter in emitters {
+        let handle = tokio::spawn(async {
+            pin_mut!(emitter);
+            while let Some(value) = emitter.next().await {
+                println!("got {:?}", value);
+            }
+        });
+        handles.push(handle)
+    }
+    println!("Starting simulation at: {}", Utc::now());
+    join_all(handles).await;
 }

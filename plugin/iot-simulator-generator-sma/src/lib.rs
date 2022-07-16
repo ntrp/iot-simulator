@@ -1,13 +1,21 @@
 use std::collections::vec_deque::*;
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use chrono::{DateTime, Utc};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 
-use iot_simulator_api::generator::*;
+use iot_simulator_api::export_plugin;
+use iot_simulator_api::generator::{
+    unwrap_arg, GenerationResult, GeneratorPlugin, GeneratorPointer,
+};
 
-#[no_mangle]
-pub fn new_instance(min: f32, max: f32, precision: u32, buffer_size: usize) -> Box<dyn GeneratorPlugin> {
+unsafe fn new_instance(args: HashMap<String, String>) -> GeneratorPointer {
+    let min = unwrap_arg("min", &args);
+    let max = unwrap_arg("max", &args);
+    let precision = unwrap_arg("precision", &args);
+    let buffer_size = unwrap_arg("buffer_size", &args);
     SMAGenerator::new(min, max, precision, buffer_size)
 }
 
@@ -20,16 +28,19 @@ pub struct SMAGenerator {
     rng: ThreadRng,
 }
 
+unsafe impl Sync for SMAGenerator {}
+unsafe impl Send for SMAGenerator {}
+
 impl SMAGenerator {
-    fn new(min: f32, max: f32, precision: u32, buffer_size: usize) -> Box<SMAGenerator> {
-        Box::new(SMAGenerator {
+    fn new(min: f32, max: f32, precision: u32, buffer_size: usize) -> Arc<RwLock<SMAGenerator>> {
+        Arc::new(RwLock::new(SMAGenerator {
             min,
             max,
             precision,
             buffer_size: buffer_size as u8,
             buffer: VecDeque::with_capacity(buffer_size),
             rng: rand::thread_rng(),
-        })
+        }))
     }
 }
 
@@ -43,7 +54,7 @@ impl GeneratorPlugin for SMAGenerator {
         }
         self.buffer.pop_back();
         self.buffer.push_front(val);
-        GenerationResult::ResultF32(round(avg(&mut self.buffer), self.precision))
+        GenerationResult::Float(round(avg(&mut self.buffer), self.precision))
     }
 }
 
@@ -55,6 +66,8 @@ fn round(n: f32, precision: u32) -> f32 {
     let p = 10i32.pow(precision) as f32;
     (n * p).round() / p
 }
+
+export_plugin!("sma", new_instance);
 
 #[cfg(test)]
 #[path = "lib_tests.rs"]

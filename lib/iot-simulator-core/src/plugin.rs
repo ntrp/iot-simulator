@@ -1,58 +1,67 @@
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::sync::RwLock;
 
 use libloading::*;
 use once_cell::sync::OnceCell;
 
-use iot_simulator_api::generator::GeneratorPlugin;
-use iot_simulator_api::output::OutputPlugin;
+use iot_simulator_api::generator::{GeneratorConfig, GeneratorPluginDeclaration, GeneratorPointer};
 
-use crate::config::{GeneratorPluginConf, OutputPluginConf};
+use crate::config::GeneratorPluginConf;
 
-type GeneratorPluginFactoryFn = fn() -> Box<dyn GeneratorPlugin>;
-
-#[derive(Debug)]
-pub struct GeneratorPluginFactoryRegistry {
-    registry: HashMap<String, GeneratorPluginFactoryFn>,
+pub struct GeneratorPluginRegistry {
+    plugins: Vec<GeneratorPluginConf>,
+    generators: RwLock<HashMap<String, GeneratorPointer>>,
 }
 
-pub static GENERATOR_FACTORY_REGISTRY: OnceCell<GeneratorPluginFactoryRegistry> = OnceCell::new();
+pub static GENERATOR_FACTORY_REGISTRY: OnceCell<GeneratorPluginRegistry> = OnceCell::new();
 
-impl GeneratorPluginFactoryRegistry {
-    pub fn instance() -> &'static GeneratorPluginFactoryRegistry {
+impl GeneratorPluginRegistry {
+    pub fn instance() -> &'static GeneratorPluginRegistry {
         GENERATOR_FACTORY_REGISTRY
             .get()
             .expect("Registry not initialized")
     }
-    pub fn get(generator_id: &String) -> Option<&'static GeneratorPluginFactoryFn> {
-        GeneratorPluginFactoryRegistry::instance().registry.get(generator_id)
-    }
     pub fn init(plugins: Vec<GeneratorPluginConf>) {
-        let mut registry: HashMap<String, GeneratorPluginFactoryFn> = HashMap::new();
-        for plugin in plugins {
-            let factory: Box<dyn GeneratorPlugin> = load_generator_plugin(&plugin);
-            registry.insert(plugin.id, Default::default);
-        }
+        let registry: RwLock<HashMap<String, GeneratorPointer>> = RwLock::new(HashMap::new());
         GENERATOR_FACTORY_REGISTRY
-            .set(GeneratorPluginFactoryRegistry { registry })
-            .unwrap()
+            .set(GeneratorPluginRegistry {
+                plugins,
+                generators: registry,
+            })
+            .unwrap_or_else(|_| panic!("Failed to init registry"));
+    }
+    pub fn register(generator_conf: &GeneratorConfig) -> GeneratorPointer {
+        let plugins = &GeneratorPluginRegistry::instance().plugins;
+        let conf = plugins
+            .iter()
+            .find(|plugin| plugin.id == generator_conf.generator_id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "No plugin configured for generator_id: {}",
+                    generator_conf.generator_id
+                )
+            });
+        let generator = init_generator(conf, generator_conf.params.clone());
+        GeneratorPluginRegistry::instance()
+            .generators
+            .write()
+            .expect("Unable to acquire a lock on the generator registry")
+            .insert(generator_conf.generator_id.clone(), generator.clone());
+        generator
     }
 }
 
-pub fn load_generator_plugin(plugin: &GeneratorPluginConf) -> Box<dyn GeneratorPlugin> {
+pub fn init_generator(
+    plugin: &GeneratorPluginConf,
+    args: HashMap<String, String>,
+) -> GeneratorPointer {
     unsafe {
-        let lib = Library::new(&plugin.path).expect("Failed to load library");
-        let factory_fn: Symbol<
-            unsafe extern "C" fn(a: f32, b: f32, c: u32, d: usize) -> Box<dyn GeneratorPlugin>,
-        > = lib.get(b"new_instance").expect("Failed to fetch symbol");
-        factory_fn(10.0, 20.0, 2, 10)
-    }
-}
-
-pub fn load_output_plugin(plugin: &OutputPluginConf) -> Box<dyn OutputPlugin> {
-    unsafe {
-        let lib = Library::new(&plugin.path).expect("Failed to load library");
-        let factory_fn: Symbol<unsafe extern "C" fn() -> Box<dyn OutputPlugin>> =
-            lib.get(b"new_instance").expect("Failed to fetch symbol");
-        factory_fn()
+        let lib = Rc::new(Library::new(&plugin.path).expect("Failed to load library"));
+        let declaration = lib
+            .get::<*mut GeneratorPluginDeclaration>(b"plugin_declaration\0")
+            .unwrap_or_else(|_| panic!("Missing plugin declaration for {}", plugin.path))
+            .read();
+        (declaration.instance_fn)(args)
     }
 }

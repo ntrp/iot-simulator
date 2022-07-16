@@ -1,0 +1,34 @@
+date_time = @{
+    SOI ~ minus? ~ "P" ~ (
+      date ~ "T" ~ time
+    | date
+    | "T" ~ time
+    ) ~ EOI
+}
+date = _{
+    year ~ month ~ day
+  | year ~ month
+  | year ~ day
+  | year
+  | month ~ day
+  | month
+  | day
+}
+time = _{
+    hour ~ minute ~ second
+  | hour ~ minute
+  | hour ~ second
+  | hour
+  | minute ~ second
+  | minute
+  | second
+}
+minus = !{ "-" }
+year = !{ number ~ "y" }
+month = !{ number ~ "m" }
+day = !{ number ~ "d" }
+hour = !{ number ~ "h" }
+minute = !{ number ~ "m" }
+second = ${ number ~ "s" }
+digits = _{ ASCII_DIGIT+ }
+number = !{ digits }

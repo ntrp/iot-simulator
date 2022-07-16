@@ -3,19 +3,26 @@ use std::collections::VecDeque;
 use crate::avg;
 
 #[cfg(test)]
-mod lib_tests {
+mod tests {
     use crate::lib_tests::std_deviation;
 
     use super::super::*;
 
     #[test]
     fn it_should_generate_in_the_range() {
-        let mut plugin = new_instance(10.0, 20.0, 2, 20);
+        let plugin = unsafe {
+            new_instance(HashMap::from([
+                ("min".to_string(), "10.0".to_string()),
+                ("max".to_string(), "20.0".to_string()),
+                ("precision".to_string(), "2".to_string()),
+                ("buffer_size".to_string(), "10".to_string()),
+            ]))
+        };
 
         for _ in 1..150 {
-            let val = match plugin.generate(Utc::now()) {
-                GenerationResult::ResultF32(val) => val,
-                _ => unreachable!("This plugin generates f32")
+            let val = match plugin.write().expect("Write lock failed").generate(Utc::now()) {
+                GenerationResult::Float(val) => val,
+                _ => unreachable!("This plugin generates f32"),
             };
             assert!(val > 10.0 && val < 20.0);
         }
@@ -23,22 +30,36 @@ mod lib_tests {
 
     #[test]
     fn it_should_have_lower_std_when_the_bucket_is_bigger() {
-        let mut plugin_small = new_instance(10.0, 20.0, 2, 5);
-        let mut plugin_large = new_instance(10.0, 20.0, 2, 20);
+        let plugin_small = unsafe {
+            new_instance(HashMap::from([
+                ("min".to_string(), "10.0".to_string()),
+                ("max".to_string(), "20.0".to_string()),
+                ("precision".to_string(), "2".to_string()),
+                ("buffer_size".to_string(), "5".to_string()),
+            ]))
+        };
+        let plugin_large = unsafe {
+            new_instance(HashMap::from([
+                ("min".to_string(), "10.0".to_string()),
+                ("max".to_string(), "20.0".to_string()),
+                ("precision".to_string(), "2".to_string()),
+                ("buffer_size".to_string(), "20".to_string()),
+            ]))
+        };
 
-        let mut small_vals: VecDeque<f32> = (1..150).map(|_| {
-            match plugin_small.generate(Utc::now()) {
-                GenerationResult::ResultF32(res) => res,
-                _ => unreachable!("This plugin generates f32")
-            }
-        }).collect();
+        let mut small_vals: VecDeque<f32> = (1..150)
+            .map(|_| match plugin_small.write().expect("Write lock failed").generate(Utc::now()) {
+                GenerationResult::Float(res) => res,
+                _ => unreachable!("This plugin generates f32"),
+            })
+            .collect();
 
-        let mut large_vals: VecDeque<f32> = (1..150).map(|_| {
-            match plugin_large.generate(Utc::now()) {
-                GenerationResult::ResultF32(res) => res,
-                _ => unreachable!("This plugin generates f32")
-            }
-        }).collect();
+        let mut large_vals: VecDeque<f32> = (1..150)
+            .map(|_| match plugin_large.write().expect("Write lock failed").generate(Utc::now()) {
+                GenerationResult::Float(res) => res,
+                _ => unreachable!("This plugin generates f32"),
+            })
+            .collect();
 
         assert!(std_deviation(&mut small_vals) > std_deviation(&mut large_vals));
     }

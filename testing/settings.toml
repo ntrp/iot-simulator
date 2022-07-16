@@ -1,4 +1,9 @@
 [[generator_plugins]]
+id = "const"
+generator_type = "Stateless"
+path = "./target/debug/libiot_simulator_generator_const.so"
+
+[[generator_plugins]]
 id = "sma"
 generator_type = "Stateful"
 path = "./target/debug/libiot_simulator_generator_sma.so"

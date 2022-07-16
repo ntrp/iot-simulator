@@ -2,6 +2,7 @@
 members = [
     "lib/iot-simulator-api",
     "lib/iot-simulator-core",
+    "plugin/iot-simulator-generator-const",
     "plugin/iot-simulator-generator-sma",
     "app/iot-simulator-cli",
 ]

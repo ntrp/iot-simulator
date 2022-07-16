@@ -1,6 +1,8 @@
 Simulation(
     name: "test",
     description: "test",
+    start_at: Offset("-PT10s"),
+    end_at: Never(),
     devices: [
         Device(
             name: "name",
@@ -9,7 +11,23 @@ Simulation(
                     name: "Temp",
                     sampling_rate: 1000,
                     value_generator: GeneratorConfig(
-                        generator_id: "sma"
+                        generator_id: "sma",
+                        params: {
+                            "min": "10.0",
+                            "max": "20.0",
+                            "precision": "2",
+                            "buffer_size": "10"
+                        }
+                    ),
+                ),
+                Sensor(
+                    name: "Const2",
+                    sampling_rate: 1000,
+                    value_generator: GeneratorConfig(
+                        generator_id: "const",
+                        params: {
+                            "val": "const2",
+                        }
                     ),
                 )
             ]
