@@ -1,7 +1,7 @@
 Simulation(
     name: "test",
     description: "test",
-    start_at: Offset("-PT10s"),
+    start_at: Offset("-P1dT10s"),
     end_at: Never(),
     devices: [
         Device(
