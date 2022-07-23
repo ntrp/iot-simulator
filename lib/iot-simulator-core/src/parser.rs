@@ -49,10 +49,10 @@ where
 #[allow(unused)]
 pub struct Device {
     #[serde(default = "Uuid::new_v4")]
-    id: Uuid,
-    name: String,
+    pub(crate) id: Uuid,
+    pub(crate) name: String,
     #[serde(default = "HashMap::new")]
-    metadata: HashMap<String, String>,
+    pub(crate) metadata: HashMap<String, String>,
     pub(crate) sensors: Vec<Sensor>,
     #[serde(default = "Vec::new")]
     pub(crate) devices: Vec<Device>,

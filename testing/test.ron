@@ -2,13 +2,13 @@ Simulation(
     name: "test",
     description: "test",
     start_at: Offset("-PT10s"),
-    end_at: Never(),
+    end_at: Offset("PT10s"),
     devices: [
         Device(
-            name: "name",
+            name: "oven",
             sensors: [
                 Sensor(
-                    name: "Temp",
+                    name: "temp",
                     sampling_rate: 1000,
                     value_generator: GeneratorConfig(
                         generator_id: "sma",
@@ -21,7 +21,7 @@ Simulation(
                     ),
                 ),
                 Sensor(
-                    name: "Const2",
+                    name: "const",
                     sampling_rate: 1000,
                     value_generator: GeneratorConfig(
                         generator_id: "const",
@@ -29,6 +29,26 @@ Simulation(
                             "val": "const2",
                         }
                     ),
+                )
+            ],
+            devices: [
+                Device(
+                    name: "door",
+                    sensors: [
+                        Sensor(
+                            name: "temp",
+                            sampling_rate: 1000,
+                            value_generator: GeneratorConfig(
+                                generator_id: "sma",
+                                params: {
+                                    "min": "10.0",
+                                    "max": "20.0",
+                                    "precision": "2",
+                                    "buffer_size": "10"
+                                }
+                            ),
+                        ),
+                    ]
                 )
             ]
         )
