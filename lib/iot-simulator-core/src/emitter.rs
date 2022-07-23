@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::thread;
 
 use async_stream::stream;
 use chrono::{DateTime, Duration, Utc};
-use futures_util::Stream;
-use tokio::sync::Notify;
+use tokio::time::sleep;
+use tokio_stream::Stream;
 use uuid::Uuid;
 
 use iot_simulator_api::generator::GenerationResult;
@@ -33,7 +32,7 @@ pub fn sensor_emitter(
         let mut current = start_at;
         while current < Utc::now() || current < end_at {
             if current > Utc::now() {
-                delay(current - Utc::now()).await;
+                sleep((current - Utc::now()).to_std().unwrap()).await;
             }
             let payload = {
                 let dpath = device_path.clone();
@@ -54,21 +53,3 @@ pub fn sensor_emitter(
         }
     }
 }
-
-async fn delay(dur: Duration) {
-    let when = Utc::now() + dur;
-    let notify = Arc::new(Notify::new());
-    let notify2 = notify.clone();
-    thread::spawn(move || {
-        let now = Utc::now();
-        if now < when {
-            thread::sleep((when - now).to_std().expect("Duration conversion failed"));
-        }
-        notify2.notify_one();
-    });
-    notify.notified().await;
-}
-
-#[cfg(test)]
-#[path = "emitter_test.rs"]
-mod emitter_test;
