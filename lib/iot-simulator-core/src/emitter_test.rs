@@ -2,17 +2,19 @@
 mod test {
     use futures_util::stream::StreamExt;
 
+    use iot_simulator_api::generator::get_mock_generator;
+
     use super::super::*;
 
     #[test]
     fn it_should_generate_historical_data_and_live() {
-        let sensor: &mut Sensor = &mut Sensor {
+        let sensor = Arc::from(Sensor {
             id: Uuid::new_v4(),
             name: "sensorA".to_string(),
             metadata: Default::default(),
             sampling_rate: 1000,
-            value_generator: Default::default(),
-        };
+            value_generator: get_mock_generator(),
+        });
         let s = sensor_emitter(
             String::from("path"),
             sensor,

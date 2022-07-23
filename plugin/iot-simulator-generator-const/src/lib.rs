@@ -1,18 +1,17 @@
-use std::collections::HashMap;
+use abi_stable::std_types::RHashMap;
 use std::sync::{Arc, RwLock};
-
-use chrono::{DateTime, Utc};
 
 use iot_simulator_api::export_plugin;
 use iot_simulator_api::generator::{
     unwrap_arg, GenerationResult, GeneratorPlugin, GeneratorPointer,
 };
 
-unsafe fn new_instance(args: HashMap<String, String>) -> GeneratorPointer {
+unsafe extern "C" fn new_instance(args: RHashMap<String, String>) -> GeneratorPointer {
     let val: String = unwrap_arg("val", &args);
-    ConstGenerator::new(GenerationResult::Str(val))
+    ConstGenerator::new(GenerationResult::Str(val.parse().unwrap()))
 }
 
+#[repr(C)]
 pub struct ConstGenerator {
     val: GenerationResult,
 }
@@ -24,7 +23,7 @@ impl ConstGenerator {
 }
 
 impl GeneratorPlugin for ConstGenerator {
-    fn generate(&mut self, _: DateTime<Utc>) -> GenerationResult {
+    fn generate(&mut self) -> GenerationResult {
         self.val.clone()
     }
 }

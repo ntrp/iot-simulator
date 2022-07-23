@@ -1,8 +1,7 @@
+use abi_stable::std_types::RHashMap;
 use std::collections::vec_deque::*;
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
-use chrono::{DateTime, Utc};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 
@@ -11,7 +10,7 @@ use iot_simulator_api::generator::{
     unwrap_arg, GenerationResult, GeneratorPlugin, GeneratorPointer,
 };
 
-unsafe fn new_instance(args: HashMap<String, String>) -> GeneratorPointer {
+unsafe extern "C" fn new_instance(args: RHashMap<String, String>) -> GeneratorPointer {
     let min = unwrap_arg("min", &args);
     let max = unwrap_arg("max", &args);
     let precision = unwrap_arg("precision", &args);
@@ -45,7 +44,7 @@ impl SMAGenerator {
 }
 
 impl GeneratorPlugin for SMAGenerator {
-    fn generate(&mut self, _: DateTime<Utc>) -> GenerationResult {
+    fn generate(&mut self) -> GenerationResult {
         let val: f32 = self.rng.gen_range(self.min..self.max);
         if self.buffer.is_empty() {
             for _ in 1..=self.buffer_size {

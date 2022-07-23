@@ -1,6 +1,6 @@
+use abi_stable::std_types::RHashMap;
 use std::collections::HashMap;
 use std::mem::ManuallyDrop;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use libloading::*;
@@ -55,11 +55,13 @@ impl GeneratorPluginRegistry {
 
 pub fn init_generator(
     plugin: &GeneratorPluginConf,
-    args: HashMap<String, String>,
+    args: RHashMap<String, String>,
 ) -> GeneratorPointer {
     unsafe {
         // Due to the fact we don't care about unloading the libs at runtime we can leak the references
-        let lib = ManuallyDrop::new(Arc::new(Library::new(&plugin.path).expect("Failed to load library")));
+        let lib = ManuallyDrop::new(Arc::new(
+            Library::new(&plugin.path).expect("Failed to load library"),
+        ));
         let declaration = lib
             .get::<*mut GeneratorPluginDeclaration>(b"plugin_declaration\0")
             .unwrap_or_else(|_| panic!("Missing plugin declaration for {}", plugin.path))

@@ -46,7 +46,7 @@ pub fn sensor_emitter(
                     name: sensor.name.clone(),
                     metadata: sensor.metadata.clone(),
                     timestamp: current,
-                    value: generator.generate(Utc::now())
+                    value: generator.generate()
                 }
             };
             yield payload;
