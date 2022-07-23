@@ -1,6 +1,6 @@
 use abi_stable::std_types::RString;
 use abi_stable::{sabi_trait, std_types::RHashMap, StableAbi};
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
@@ -51,7 +51,7 @@ fn default_instance_id() -> String {
 }
 
 #[sabi_trait]
-pub trait GeneratorPlugin: Send + Sync {
+pub trait GeneratorPlugin: Send + Sync + Debug {
     fn generate(&mut self) -> GenerationResult;
 }
 
@@ -66,6 +66,7 @@ impl Display for GenerationResult {
 }
 
 pub fn get_mock_generator() -> Arc<RwLock<dyn GeneratorPlugin>> {
+    #[derive(Debug)]
     struct Anon();
     impl GeneratorPlugin for Anon {
         fn generate(&mut self) -> GenerationResult {

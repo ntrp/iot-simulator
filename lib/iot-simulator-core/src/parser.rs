@@ -22,7 +22,8 @@ pub fn parse_simulation(file_path: String) -> Simulation {
         Err(error) => panic!("{:?}", error),
     }
 }
-#[derive(Derivative, Deserialize)]
+
+#[derive(Derivative, Deserialize, Clone)]
 #[derivative(Debug)]
 pub struct Sensor {
     #[serde(default = "Uuid::new_v4")]
@@ -34,15 +35,21 @@ pub struct Sensor {
     #[serde(deserialize_with = "to_generator")]
     #[derivative(Debug = "ignore")]
     pub value_generator: GeneratorPointer,
+    #[serde(default = "one")]
+    pub replicate: i32,
 }
 
 fn to_generator<'de, D>(deserializer: D) -> Result<GeneratorPointer, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let config = GeneratorConfig::deserialize(deserializer)?;
-    let generator = GeneratorPluginRegistry::register(&config);
+    let mut config = GeneratorConfig::deserialize(deserializer)?;
+    let generator = GeneratorPluginRegistry::register(&mut config);
     Ok(generator)
+}
+
+fn one() -> i32 {
+    1_i32
 }
 
 #[derive(Debug, Deserialize)]

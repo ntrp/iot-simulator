@@ -1,15 +1,21 @@
-use abi_stable::std_types::RHashMap;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, RwLock};
 
+use abi_stable::reexports::SelfOps;
+use abi_stable::std_types::RHashMap;
 use libloading::*;
 use once_cell::sync::OnceCell;
+use uuid::Uuid;
 
-use iot_simulator_api::generator::{GeneratorConfig, GeneratorPluginDeclaration, GeneratorPointer};
+use iot_simulator_api::generator::{
+    GeneratorConfig, GeneratorPluginDeclaration, GeneratorPointer, GeneratorType,
+};
 
 use crate::config::GeneratorPluginConf;
 
+#[derive(Debug)]
 pub struct GeneratorPluginRegistry {
     plugins: Vec<GeneratorPluginConf>,
     generators: RwLock<HashMap<String, GeneratorPointer>>,
@@ -32,8 +38,9 @@ impl GeneratorPluginRegistry {
             })
             .unwrap_or_else(|_| panic!("Failed to init registry"));
     }
-    pub fn register(generator_conf: &GeneratorConfig) -> GeneratorPointer {
-        let plugins = &GeneratorPluginRegistry::instance().plugins;
+    pub fn register(generator_conf: &mut GeneratorConfig) -> GeneratorPointer {
+        let registry = GeneratorPluginRegistry::instance();
+        let plugins = &registry.plugins;
         let conf = plugins
             .iter()
             .find(|plugin| plugin.id == generator_conf.generator_id)
@@ -43,13 +50,14 @@ impl GeneratorPluginRegistry {
                     generator_conf.generator_id
                 )
             });
-        let generator = init_generator(conf, generator_conf.params.clone());
-        GeneratorPluginRegistry::instance()
+        let mut generator_map = registry
             .generators
             .write()
-            .expect("Unable to acquire a lock on the generator registry")
-            .insert(generator_conf.generator_id.clone(), generator.clone());
-        generator
+            .expect("Cannot acquire write lock on the generator registry");
+        let generator = generator_map
+            .entry(generator_conf.instance_id.clone())
+            .or_insert_with(|| init_generator(conf, generator_conf.params.clone()));
+        generator.clone()
     }
 }
 

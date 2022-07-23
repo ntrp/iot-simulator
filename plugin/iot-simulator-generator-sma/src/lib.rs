@@ -18,6 +18,7 @@ unsafe extern "C" fn new_instance(args: RHashMap<String, String>) -> GeneratorPo
     SMAGenerator::new(min, max, precision, buffer_size)
 }
 
+#[derive(Debug)]
 pub struct SMAGenerator {
     min: f32,
     max: f32,

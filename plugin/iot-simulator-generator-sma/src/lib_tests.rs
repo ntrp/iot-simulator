@@ -5,7 +5,6 @@ use crate::avg;
 #[cfg(test)]
 mod tests {
     use crate::lib_tests::std_deviation;
-    use chrono::Utc;
     use std::collections::HashMap;
 
     use super::super::*;

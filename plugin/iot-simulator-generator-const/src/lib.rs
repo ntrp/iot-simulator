@@ -12,6 +12,7 @@ unsafe extern "C" fn new_instance(args: RHashMap<String, String>) -> GeneratorPo
 }
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct ConstGenerator {
     val: GenerationResult,
 }

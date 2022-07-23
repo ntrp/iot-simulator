@@ -20,5 +20,6 @@ async fn main() {
     let settings = load_settings(args.config_file);
     GeneratorPluginRegistry::init(settings.generator_plugins);
     let simulation = parse_simulation(args.simulation_file);
+    println!("{:?}", GeneratorPluginRegistry::instance());
     iot_simulator_core::simulation::run(simulation).await;
 }
