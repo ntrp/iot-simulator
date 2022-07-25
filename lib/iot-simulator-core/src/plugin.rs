@@ -1,17 +1,12 @@
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, RwLock};
 
-use abi_stable::reexports::SelfOps;
 use abi_stable::std_types::RHashMap;
 use libloading::*;
 use once_cell::sync::OnceCell;
-use uuid::Uuid;
 
-use iot_simulator_api::generator::{
-    GeneratorConfig, GeneratorPluginDeclaration, GeneratorPointer, GeneratorType,
-};
+use iot_simulator_api::generator::{GeneratorConfig, GeneratorPluginDeclaration, GeneratorPointer};
 
 use crate::config::GeneratorPluginConf;
 

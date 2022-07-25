@@ -1,26 +1,13 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_stream::stream;
 use chrono::{DateTime, Duration, Utc};
 use tokio::time::sleep;
 use tokio_stream::Stream;
-use uuid::Uuid;
 
-use iot_simulator_api::generator::GenerationResult;
+use iot_simulator_api::output::SensorPayload;
 
 use crate::parser::Sensor;
-
-#[derive(Debug)]
-#[allow(unused)]
-pub struct SensorPayload {
-    id: Uuid,
-    device_path: String,
-    name: String,
-    metadata: HashMap<String, String>,
-    timestamp: DateTime<Utc>,
-    value: GenerationResult,
-}
 
 pub fn sensor_emitter(
     device_path: String,

@@ -29,17 +29,17 @@ Simulation(
                             "val": "const_repl",
                         }
                     ),
-                    replicate: 1
                 ),
                 Sensor(
-                    name: "const2",
-                    sampling_rate: 1000,
+                    name: "const300",
+                    sampling_rate: 900,
                     value_generator: GeneratorConfig(
                         generator_id: "const",
                         params: {
                             "val": "const2",
                         }
                     ),
+                    replicate: 5
                 )
             ],
             devices: [
