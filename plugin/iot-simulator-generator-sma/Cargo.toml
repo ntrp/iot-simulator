@@ -7,7 +7,7 @@ edition = "2021"
 iot-simulator-api = { path = "../../lib/iot-simulator-api", version = "*" }
 rand = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
-abi_stable = "0.10.4"
+abi_stable = "0.11.0"
 
 [lib]
 crate-type = ["dylib"]
