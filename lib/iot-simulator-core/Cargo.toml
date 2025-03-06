@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 iot-simulator-api = { path = "../../lib/iot-simulator-api", version = "*" }
-libloading = "0.7.3"
+libloading = "0.8.0"
 ron = "0.7"
 home = "0.5.3"
 config = { version = "0.15.0", features = ["toml"] }
