@@ -27,7 +27,7 @@ pub fn sensor_emitter(
                     .unwrap_or_else(|e| panic!("Failed to acquire lock on the sensor generator for sensor: {}/{} {:?}", &dpath, sensor.name, e));
 
                 SensorPayload {
-                    id: sensor.id.clone(),
+                    id: sensor.id,
                     device_path: dpath,
                     name: sensor.name.clone(),
                     metadata: sensor.metadata.clone(),
@@ -36,7 +36,7 @@ pub fn sensor_emitter(
                 }
             };
             yield payload;
-            current = current + Duration::milliseconds(sensor.sampling_rate);
+            current += Duration::milliseconds(sensor.sampling_rate);
         }
     }
 }

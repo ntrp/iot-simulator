@@ -65,14 +65,16 @@ impl Display for GenerationResult {
     }
 }
 
-pub fn get_mock_generator() -> Arc<RwLock<dyn GeneratorPlugin>> {
-    #[derive(Debug)]
-    struct Anon();
-    impl GeneratorPlugin for Anon {
-        fn generate(&mut self) -> GenerationResult {
-            GenerationResult::Int(1)
-        }
+#[derive(Debug)]
+struct Anon();
+
+impl GeneratorPlugin for Anon {
+    fn generate(&mut self) -> GenerationResult {
+        GenerationResult::Int(1)
     }
+}
+
+pub fn get_mock_generator() -> Arc<RwLock<dyn GeneratorPlugin>> {
     Arc::new(RwLock::new(Anon()))
 }
 
@@ -102,7 +104,7 @@ macro_rules! export_plugin {
     ($generator_id:expr,$instance_fn:expr) => {
         #[doc(hidden)]
         #[no_mangle]
-        pub static plugin_declaration: $crate::generator::GeneratorPluginDeclaration =
+        pub static PLUGIN_DECLARATION: $crate::generator::GeneratorPluginDeclaration =
             $crate::generator::GeneratorPluginDeclaration {
                 rustc_version: $crate::RUSTC_VERSION,
                 core_version: $crate::CORE_VERSION,

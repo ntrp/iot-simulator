@@ -2,6 +2,20 @@ use std::collections::VecDeque;
 
 use crate::avg;
 
+fn std_deviation(data: &mut VecDeque<f32>) -> f32 {
+    let avg = avg(data);
+    let count = data.len();
+    let variance = data
+        .iter()
+        .map(|value| {
+            let diff = avg - *value;
+            diff * diff
+        })
+        .sum::<f32>()
+        / count as f32;
+    variance.sqrt()
+}
+
 #[cfg(test)]
 mod tests {
     use crate::lib_tests::std_deviation;
@@ -77,18 +91,4 @@ mod tests {
 
         assert!(std_deviation(&mut small_vals) > std_deviation(&mut large_vals));
     }
-}
-
-fn std_deviation(data: &mut VecDeque<f32>) -> f32 {
-    let avg = avg(data);
-    let count = data.len();
-    let variance = data
-        .iter()
-        .map(|value| {
-            let diff = avg - (*value as f32);
-            diff * diff
-        })
-        .sum::<f32>()
-        / count as f32;
-    variance.sqrt()
 }

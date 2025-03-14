@@ -39,14 +39,14 @@ impl SMAGenerator {
             precision,
             buffer_size: buffer_size as u8,
             buffer: VecDeque::with_capacity(buffer_size),
-            rng: rand::thread_rng(),
+            rng: rand::rng(),
         }))
     }
 }
 
 impl GeneratorPlugin for SMAGenerator {
     fn generate(&mut self) -> GenerationResult {
-        let val: f32 = self.rng.gen_range(self.min..self.max);
+        let val: f32 = self.rng.random_range(self.min..self.max);
         if self.buffer.is_empty() {
             for _ in 1..=self.buffer_size {
                 self.buffer.push_front(val)

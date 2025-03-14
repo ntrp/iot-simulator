@@ -66,7 +66,7 @@ pub fn init_generator(
             Library::new(&plugin.path).expect("Failed to load library"),
         ));
         let declaration = lib
-            .get::<*mut GeneratorPluginDeclaration>(b"plugin_declaration\0")
+            .get::<*mut GeneratorPluginDeclaration>(b"PLUGIN_DECLARATION\0")
             .unwrap_or_else(|_| panic!("Missing plugin declaration for {}", plugin.path))
             .read();
         (declaration.instance_fn)(args)
