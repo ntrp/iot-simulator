@@ -4,13 +4,13 @@ use std::fmt::{Debug, Display, Error, Formatter};
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 // TODO: make the interface fully abi stable via the abi_stable package
 
 #[repr(C)]
-#[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd, StableAbi)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, PartialOrd, StableAbi)]
 pub enum GenerationResult {
     Int(i32),
     Float(f32),
@@ -88,16 +88,6 @@ pub struct GeneratorPluginDeclaration {
     pub instance_fn: unsafe extern "C" fn(args: RHashMap<String, String>) -> GeneratorPointer,
 }
 
-pub fn unwrap_arg<T: FromStr>(arg: &str, args: &RHashMap<String, String>) -> T {
-    match args
-        .get(arg)
-        .unwrap_or_else(|| panic!("No argument named {} available in the args map", arg))
-        .parse::<T>()
-    {
-        Ok(val) => val,
-        Err(_) => panic!("Failed to parse param '{}'", arg),
-    }
-}
 
 #[macro_export]
 macro_rules! export_plugin {

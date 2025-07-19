@@ -1,59 +1,42 @@
-use futures_util::future::BoxFuture;
-use futures_util::TryFutureExt;
-use tokio::sync::broadcast;
-use tokio::sync::broadcast::{Receiver, Sender};
+use tokio::sync::broadcast::{self, error::SendError};
+use tokio::sync::broadcast::Sender;
 
-use crate::output::SensorPayload;
+use tokio::task::JoinHandle;
 
-type SimSenderResult<'a> = BoxFuture<'a, Result<(), String>>;
-type SimReceiverResult<'a> = BoxFuture<'a, Result<SensorPayload, String>>;
-
-pub trait SimSender {
-    fn send(&self, payload: SensorPayload) -> BoxFuture<Result<(), String>>;
-}
-
-pub trait SimReceiver {
-    fn next(&mut self) -> SimReceiverResult;
-}
-
-pub struct SimChannel {
-    pub tx: Box<dyn SimSender + Send + Sync>,
-    pub rx: Box<dyn SimReceiver + Send + Sync>,
-}
+use crate::output::{OutputPointer, SensorPayload};
 
 pub trait ChannelPlugin {
-    fn init() -> SimChannel;
-    fn with_capacity(capacity: usize) -> SimChannel;
+    fn send(&mut self, payload: SensorPayload) -> Result<usize, SendError<SensorPayload>>;
+    fn subscribe(&mut self, output: OutputPointer);
 }
 
-pub struct DefaultChannel;
-impl ChannelPlugin for DefaultChannel {
-    fn init() -> SimChannel {
-        DefaultChannel::with_capacity(65536)
-    }
+pub struct InMemoryChannel {
+    tx: Sender<SensorPayload>,
+    rx_handlers: Vec<JoinHandle<()>>,
+}
 
-    fn with_capacity(capacity: usize) -> SimChannel {
-        let (tx, rx) = broadcast::channel(capacity);
-        SimChannel {
-            tx: Box::new(DefaultSender(tx)),
-            rx: Box::new(DefaultReceiver(rx)),
+impl InMemoryChannel {
+    pub fn new() -> InMemoryChannel {
+        let (tx, _) = broadcast::channel(65535);
+        InMemoryChannel {
+            tx,
+            rx_handlers: vec![]
         }
     }
 }
 
-struct DefaultSender(Sender<SensorPayload>);
-impl SimSender for DefaultSender {
-    fn send(&self, payload: SensorPayload) -> SimSenderResult {
-        Box::pin(async {
-            self.0.send(payload).unwrap();
-            Ok(())
-        })
+impl ChannelPlugin for InMemoryChannel {
+    fn send(&mut self, payload: SensorPayload) -> Result<usize, SendError<SensorPayload>> {
+        self.tx.send(payload)
     }
-}
 
-struct DefaultReceiver(Receiver<SensorPayload>);
-impl SimReceiver for DefaultReceiver {
-    fn next(&mut self) -> SimReceiverResult {
-        Box::pin(self.0.recv().map_err(|e| e.to_string()))
+    fn subscribe(&mut self, output: OutputPointer) {
+        let mut rx = self.tx.subscribe();
+        let handle = tokio::spawn(async move {
+            while let Ok(result) = rx.recv().await {
+                output.to_owned().write().expect("Cannot get write lock").send(result);
+            }
+        });
+        self.rx_handlers.push(handle);
     }
 }

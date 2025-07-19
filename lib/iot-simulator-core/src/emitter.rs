@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{pin::Pin, sync::Arc};
 
 use async_stream::stream;
 use chrono::{DateTime, Duration, Utc};
@@ -14,8 +14,8 @@ pub fn sensor_emitter(
     sensor: Arc<Sensor>,
     start_at: DateTime<Utc>,
     end_at: DateTime<Utc>,
-) -> impl Stream<Item = SensorPayload> {
-    stream! {
+) -> Pin<Box<dyn Stream<Item = SensorPayload>>> {
+    Box::pin(stream! {
         let mut current = start_at;
         while current < Utc::now() || current < end_at {
             if current > Utc::now() {
@@ -38,5 +38,5 @@ pub fn sensor_emitter(
             yield payload;
             current += Duration::milliseconds(sensor.sampling_rate);
         }
-    }
+    })
 }

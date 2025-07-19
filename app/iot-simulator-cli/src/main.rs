@@ -18,7 +18,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
     let settings = load_settings(args.config_file);
-    GeneratorPluginRegistry::init(settings.generator_plugins);
+    GeneratorPluginRegistry::init(settings.generator_plugins, settings.output_plugins);
     let simulation = parse_simulation(args.simulation_file);
     println!("{:?}", GeneratorPluginRegistry::instance());
     iot_simulator_core::simulation::run(simulation).await;

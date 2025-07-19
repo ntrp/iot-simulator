@@ -7,3 +7,7 @@ path = "./target/debug/libiot_simulator_generator_const.dylib"
 id = "sma"
 generator_type = "Stateful"
 path = "./target/debug/libiot_simulator_generator_sma.dylib"
+
+[[output_plugins]]
+id = "stdout"
+path = "./target/debug/libiot_simulator_output_stdout.dylib"

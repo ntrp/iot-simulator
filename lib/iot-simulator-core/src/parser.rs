@@ -1,16 +1,18 @@
 extern crate pest;
 
-use std::collections::HashMap;
-use std::fs;
-
 use chrono::{DateTime, Duration, Utc};
 use derivative::Derivative;
 use pest::iterators::Pair;
 use pest::Parser;
 use serde::{Deserialize, Deserializer};
+use std::collections::HashMap;
+use std::fs;
 use uuid::Uuid;
 
-use iot_simulator_api::generator::{GeneratorConfig, GeneratorPointer};
+use iot_simulator_api::{
+    generator::{GeneratorConfig, GeneratorPointer},
+    output::{OutputConfig, OutputPointer},
+};
 
 use crate::plugin::GeneratorPluginRegistry;
 
@@ -145,13 +147,32 @@ fn get_value(pair: Pair<Rule>) -> i64 {
 #[allow(unused)]
 pub struct Simulation {
     name: String,
+
     #[serde(default = "String::new")]
     description: String,
+
     #[serde(deserialize_with = "to_date_time_start_at")]
     pub(crate) start_at: DateTime<Utc>,
+
     #[serde(deserialize_with = "to_date_time_end_at")]
     pub(crate) end_at: DateTime<Utc>,
+
     pub(crate) devices: Vec<Device>,
+
+    #[serde(deserialize_with = "to_output_plugins")]
     #[serde(default = "Vec::new")]
-    output_plugins: Vec<String>,
+    output_plugins: Vec<OutputPointer>,
+}
+
+fn to_output_plugins<'de, D>(deserializer: D) -> Result<Vec<OutputPointer>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let configs = Vec::<OutputConfig>::deserialize(deserializer)?;
+    let mut pointers = Vec::new();
+    for mut config in configs {
+        let output = GeneratorPluginRegistry::register_output(&mut config);
+        pointers.push(output);
+    }
+    Ok(pointers)
 }
