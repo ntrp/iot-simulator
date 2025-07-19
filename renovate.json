@@ -5,17 +5,29 @@
   ],
   "packageRules": [
     {
-      "matchManagers": ["cargo"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "groupName": "Rust (minor/patch)",
       "automerge": true
     },
     {
-      "matchManagers": ["cargo"],
-      "matchUpdateTypes": ["major"],
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "groupName": "Rust (major)",
       "automerge": false
     }
   ],
-  "packageFiles": ["Cargo.toml", "Cargo.lock"]
+  "includePaths": [
+    "Cargo.toml",
+    "Cargo.lock"
+  ]
 }
