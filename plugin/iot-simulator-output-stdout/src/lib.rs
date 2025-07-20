@@ -27,7 +27,7 @@ impl OutputPlugin for StdoutOutput {
         if self.pretty {
             println!("{}", to_string_pretty(&payload).unwrap_or_else(|e| format!("Failed to serialize payload: {}", e)))
         } else {
-            println!("OutputPlugin Got = {:?}", payload)
+            println!("OutputPlugin Got = {}", to_string(&payload).unwrap_or_else(|_| "<serialization failed>".to_string()))
         };
     }
 }
