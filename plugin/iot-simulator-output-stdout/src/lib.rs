@@ -18,7 +18,7 @@ unsafe impl Send for StdoutOutput {}
 
 impl StdoutOutput {
     fn new(pretty: bool) -> Arc<RwLock<StdoutOutput>> {
-        Arc::new(RwLock::new(StdoutOutput { pretty: pretty }))
+        Arc::new(RwLock::new(StdoutOutput { pretty }))
     }
 }
 
