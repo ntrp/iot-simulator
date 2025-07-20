@@ -7,3 +7,4 @@ pub mod emitter;
 pub mod parser;
 pub mod plugin;
 pub mod simulation;
+pub mod utils;

@@ -1,4 +1,5 @@
 use abi_stable::std_types::RHashMap;
+use iot_simulator_core::utils::unwrap_arg;
 use std::collections::vec_deque::*;
 use std::sync::{Arc, RwLock};
 
@@ -7,7 +8,7 @@ use rand::Rng;
 
 use iot_simulator_api::export_plugin;
 use iot_simulator_api::generator::{
-    unwrap_arg, GenerationResult, GeneratorPlugin, GeneratorPointer,
+    GenerationResult, GeneratorPlugin, GeneratorPointer,
 };
 
 unsafe extern "C" fn new_instance(args: RHashMap<String, String>) -> GeneratorPointer {

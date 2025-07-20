@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-
+use abi_stable::std_types::RHashMap;
 use chrono::{DateTime, Utc};
-use tokio::sync::broadcast::Receiver;
-use tokio::sync::RwLock;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use std::sync::Arc;
+use std::{collections::HashMap, sync::RwLock};
 use uuid::Uuid;
 
 use crate::generator::GenerationResult;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 #[allow(unused)]
 pub struct SensorPayload {
     pub id: Uuid,
@@ -19,21 +19,56 @@ pub struct SensorPayload {
     pub value: GenerationResult,
 }
 
-pub trait OutputPlugin {
-    fn register(&self, payload_receiver: &'static mut Receiver<SensorPayload>);
+fn default_instance_id() -> String {
+    Uuid::new_v4().to_string()
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OutputConfig {
+    pub output_id: String,
+    #[serde(default = "default_instance_id")]
+    pub instance_id: String,
+    #[serde(default = "RHashMap::new")]
+    pub params: RHashMap<String, String>,
+}
+
+// #[sabi_trait]
+pub trait OutputPlugin: Send + Sync + Debug {
+    fn send(&self, payload: SensorPayload);
 }
 
 pub fn get_mock_output() -> Arc<RwLock<dyn OutputPlugin>> {
     #[derive(Debug)]
     struct Anon();
     impl OutputPlugin for Anon {
-        fn register(&self, payload_receiver: &'static mut Receiver<SensorPayload>) {
-            tokio::spawn(async move {
-                while let Ok(message) = &payload_receiver.recv().await {
-                    println!("GOT = {:?}", message);
-                }
-            });
+        fn send(&self, payload: SensorPayload) {
+            println!("GOT = {:?}", payload);
         }
     }
     Arc::new(RwLock::new(Anon()))
+}
+
+pub type OutputPointer = Arc<RwLock<dyn OutputPlugin>>;
+
+#[derive(Copy, Clone)]
+pub struct OutputPluginDeclaration {
+    pub rustc_version: &'static str,
+    pub core_version: &'static str,
+    pub output_id: &'static str,
+    pub instance_fn: unsafe extern "C" fn(args: RHashMap<String, String>) -> OutputPointer,
+}
+
+#[macro_export]
+macro_rules! export_output_plugin {
+    ($output_id:expr,$instance_fn:expr) => {
+        #[doc(hidden)]
+        #[no_mangle]
+        pub static PLUGIN_DECLARATION: $crate::output::OutputPluginDeclaration =
+            $crate::output::OutputPluginDeclaration {
+                rustc_version: $crate::RUSTC_VERSION,
+                core_version: $crate::CORE_VERSION,
+                output_id: $output_id,
+                instance_fn: $instance_fn,
+            };
+    };
 }

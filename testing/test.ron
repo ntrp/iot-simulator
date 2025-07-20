@@ -63,5 +63,13 @@ Simulation(
                 )
             ]
         )
+    ],
+    output_plugins: [
+      OutputConfig(
+        output_id: "stdout",
+        params: {
+          "pretty": "false"
+        }
+      )
     ]
 )
