@@ -83,7 +83,7 @@ impl GeneratorPluginRegistry {
             .write()
             .expect("Cannot acquire write lock on the output registry");
         let output = output_map
-            .entry(output_conf.instance_id.clone())
+            .entry(&output_conf.instance_id)
             .or_insert_with(|| init_output(conf, output_conf.params.clone()));
         output.clone()
     }
