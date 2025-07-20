@@ -18,39 +18,68 @@ This project is a highly extensible IoT simulator written in Rust. It allows you
 The simulation is defined in a RON file. Here is an example:
 
 ```ron
-(
-    start_at: "2025-07-20T00:00:00Z",
-    end_at: "2025-07-20T00:01:00Z",
+Simulation(
+    name: "Oven Simulation",
+    description: "A simple simulation about an oven with multiple devices",
+    start_at: Offset("-PT10s"),
+    end_at: Never(),
     devices: [
-        (
-            name: "building-1",
+        Device(
+            name: "oven",
+            sensors: [
+                Sensor(
+                    name: "temperature",
+                    sampling_rate: 1000,
+                    value_generator: GeneratorConfig(
+                        generator_id: "sma",
+                        params: {
+                            "min": "10.0",
+                            "max": "20.0",
+                            "precision": "2",
+                            "buffer_size": "10"
+                        }
+                    )
+                ),
+                Sensor(
+                    name: "lumens",
+                    sampling_rate: 5000,
+                    value_generator: GeneratorConfig(
+                        generator_id: "const",
+                        params: {
+                            "val": "10",
+                        }
+                    ),
+                ),
+            ],
             devices: [
-                (
-                    name: "floor-1",
+                Device(
+                    name: "fan",
                     sensors: [
-                        (
-                            name: "temperature",
-                            generator: (
+                        Sensor(
+                            name: "speed",
+                            sampling_rate: 3000,
+                            value_generator: GeneratorConfig(
                                 generator_id: "sma",
                                 params: {
-                                    "initial_value": "25.0",
-                                    "max_change": "0.5"
+                                    "min": "500",
+                                    "max": "600",
+                                    "precision": "1",
+                                    "buffer_size": "10"
                                 }
-                            )
+                            ),
                         ),
-                        (
-                            name: "humidity",
-                            generator: (
-                                generator_id: "const",
-                                params: {
-                                    "value": "60.0"
-                                }
-                            )
-                        )
                     ]
                 )
             ]
         )
+    ],
+    output_plugins: [
+      OutputConfig(
+        output_id: "stdout",
+        params: {
+          "pretty": "true"
+        }
+      )
     ]
 )
 ```
@@ -62,15 +91,17 @@ The simulator needs to know where to find the plugin libraries. This is configur
 ```toml
 [[generator_plugins]]
 id = "const"
-path = "target/debug/libiot_simulator_generator_const.so"
+generator_type = "Stateless"
+path = "./target/debug/libiot_simulator_generator_const.dylib"
 
 [[generator_plugins]]
 id = "sma"
-path = "target/debug/libiot_simulator_generator_sma.so"
+generator_type = "Stateful"
+path = "./target/debug/libiot_simulator_generator_sma.dylib"
 
 [[output_plugins]]
 id = "stdout"
-path = "target/debug/libiot_simulator_output_stdout.so"
+path = "./target/debug/libiot_simulator_output_stdout.dylib"
 ```
 
 ### 3. Run the Simulation
@@ -82,3 +113,8 @@ cargo run -- -c settings.toml -s test.ron
 ```
 
 This will start the simulation and print the generated data to the console.
+
+There are already prepared config files in the testing folder so the demo can be run with:
+```bash
+cargo run -- -s ./testing/test.ron -c ./testing/settings.toml
+```

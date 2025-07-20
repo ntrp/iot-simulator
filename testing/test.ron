@@ -1,6 +1,6 @@
 Simulation(
-    name: "test",
-    description: "test",
+    name: "Oven Simulation",
+    description: "A simple simulation about an oven with multiple devices",
     start_at: Offset("-PT10s"),
     end_at: Never(),
     devices: [
@@ -8,8 +8,8 @@ Simulation(
             name: "oven",
             sensors: [
                 Sensor(
-                    name: "temp",
-                    sampling_rate: 1000,
+                    name: "temperature",
+                    sampling_rate: 967,
                     value_generator: GeneratorConfig(
                         generator_id: "sma",
                         params: {
@@ -21,40 +21,29 @@ Simulation(
                     )
                 ),
                 Sensor(
-                    name: "const",
-                    sampling_rate: 1000,
+                    name: "lumens",
+                    sampling_rate: 4320,
                     value_generator: GeneratorConfig(
                         generator_id: "const",
                         params: {
-                            "val": "const_repl",
+                            "val": "10",
                         }
                     ),
                 ),
-                Sensor(
-                    name: "const300",
-                    sampling_rate: 900,
-                    value_generator: GeneratorConfig(
-                        generator_id: "const",
-                        params: {
-                            "val": "const2",
-                        }
-                    ),
-                    replicate: 5
-                )
             ],
             devices: [
                 Device(
-                    name: "door",
+                    name: "fan",
                     sensors: [
                         Sensor(
-                            name: "tempDoor",
-                            sampling_rate: 1000,
+                            name: "speed",
+                            sampling_rate: 3120,
                             value_generator: GeneratorConfig(
                                 generator_id: "sma",
                                 params: {
-                                    "min": "30.0",
-                                    "max": "40.0",
-                                    "precision": "2",
+                                    "min": "500",
+                                    "max": "600",
+                                    "precision": "1",
                                     "buffer_size": "10"
                                 }
                             ),
@@ -68,7 +57,7 @@ Simulation(
       OutputConfig(
         output_id: "stdout",
         params: {
-          "pretty": "false"
+          "pretty": "true"
         }
       )
     ]
