@@ -25,7 +25,7 @@ impl StdoutOutput {
 impl OutputPlugin for StdoutOutput {
     fn send(&self, payload: SensorPayload) {
         if self.pretty {
-            println!("{}", to_string_pretty(&payload).unwrap())
+            println!("{}", to_string_pretty(&payload).unwrap_or_else(|e| format!("Failed to serialize payload: {}", e)))
         } else {
             println!("OutputPlugin Got = {:?}", payload)
         };
