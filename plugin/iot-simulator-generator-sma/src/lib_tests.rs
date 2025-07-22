@@ -65,13 +65,13 @@ mod tests {
                     ("min".to_string(), "10.0".to_string()),
                     ("max".to_string(), "20.0".to_string()),
                     ("precision".to_string(), "2".to_string()),
-                    ("buffer_size".to_string(), "20".to_string()),
+                    ("buffer_size".to_string(), "50".to_string()),
                 ])
                 .into(),
             )
         };
 
-        let mut small_vals: VecDeque<f32> = (1..150)
+        let mut small_vals: VecDeque<f32> = (1..10000)
             .map(
                 |_| match plugin_small.write().expect("Write lock failed").generate() {
                     GenerationResult::Float(res) => res,
@@ -80,7 +80,7 @@ mod tests {
             )
             .collect();
 
-        let mut large_vals: VecDeque<f32> = (1..150)
+        let mut large_vals: VecDeque<f32> = (1..10000)
             .map(
                 |_| match plugin_large.write().expect("Write lock failed").generate() {
                     GenerationResult::Float(res) => res,
