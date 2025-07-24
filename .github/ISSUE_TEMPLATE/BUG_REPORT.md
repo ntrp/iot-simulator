@@ -1,7 +1,7 @@
 ---
 name: 🐛 Bug Report
 about: Report a reproducible bug
-title: "[BUG]"
+title: "[BUG] "
 labels: bug
 assignees: ''
 
@@ -11,7 +11,7 @@ assignees: ''
 
 A clear and concise description of what the bug is.
 
-## 再現手順 (Steps to Reproduce)
+## Steps to Reproduce
 
 Steps to reproduce the behavior:
 
